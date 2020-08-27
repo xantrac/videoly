@@ -31,7 +31,7 @@ defmodule VideolyWeb.Router do
   scope "/webhooks", VideolyWeb do
     pipe_through :api
 
-    post "/twilio", WebHooksController, :twilio
+    post "/twilio", WebhooksController, :twilio
   end
 
   # Enables LiveDashboard only for development

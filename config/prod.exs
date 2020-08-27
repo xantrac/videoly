@@ -34,6 +34,8 @@ config :videoly, VideolyWeb.Repo,
 config :videoly,
   TWILIO_ACCOUNT_SID: Map.fetch!(System.get_env(), "TWILIO_ACCOUNT_SID"),
   TWILIO_API_KEY: Map.fetch!(System.get_env(), "TWILIO_API_KEY"),
-  TWILIO_API_SECRET: Map.fetch!(System.get_env(), "TWILIO_API_SECRET")
+  TWILIO_API_SECRET: Map.fetch!(System.get_env(), "TWILIO_API_SECRET"),
+  MEETING_BASE_URL: Map.fetch!(System.get_env(), "MEETING_BASE_URL")
+  CALENDLY_BASE_URL: Map.fetch!(System.get_env(), "CALENDLY_BASE_URL")
 
 import_config "prod.secret.exs"
