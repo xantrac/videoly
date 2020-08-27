@@ -1,7 +1,7 @@
 defmodule VideolyWeb.VideoChannel do
   use Phoenix.Channel
 
-  def join("video:peer2peer", _message, socket) do
+  def join(channel_name, _message, socket) do
     {:ok, socket}
   end
 

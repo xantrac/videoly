@@ -4,7 +4,10 @@ let socket = new Socket('/socket', { params: { token: window.userToken } });
 
 socket.connect();
 
-let channel = socket.channel('video:peer2peer', {});
+const meetingUuid = document.getElementById("header").getAttribute("data");
+console.log(meetingUuid)
+
+let channel = socket.channel(`video:${meetingUuid}`, {});
 
 channel
   .join()

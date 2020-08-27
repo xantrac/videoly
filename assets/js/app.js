@@ -41,9 +41,7 @@ async function connect() {
     connectButton.disabled = true;
     disconnectButton.disabled = false;
     callButton.disabled = false;
-    console.log("RUN")
     const localStream = await devices.getUserMedia(mediaConstraints);
-    console.log(localStream, "LOCALSTREAM")
     setVideoStream(localVideo, localStream);
     peerConnection = createPeerConnection(localStream);
 }
@@ -55,22 +53,21 @@ async function call() {
 }
 
 function createPeerConnection(stream) {
-    let pc = new RTCPeerConnection({
+    let connection = new RTCPeerConnection({
         iceServers: [
-            // Information about ICE servers - Use your own!
             {
                 urls: 'stun:stun.stunprotocol.org',
             },
         ],
     });
-    pc.ontrack = handleOnTrack;
-    pc.onicecandidate = handleIceCandidate;
-    stream.getTracks().forEach(track => pc.addTrack(track));
-    return pc;
+    connection.ontrack = handleOnTrack;
+    connection.onicecandidate = handleIceCandidate;
+    stream.getTracks().forEach(track => connection.addTrack(track));
+    return connection;
 }
 
 function handleOnTrack(event) {
-    log(event);
+    console.log(event);
     remoteStream.addTrack(event.track);
 }
 

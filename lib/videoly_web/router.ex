@@ -17,6 +17,7 @@ defmodule VideolyWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :index
+    get "/meet/:meeting_uuid", PageController, :meet
   end
 
   # Other scopes may use custom stacks.
