@@ -7,16 +7,11 @@ defmodule Videoly.Application do
 
   def start(_type, _args) do
     children = [
-      # Start the Ecto repository
       Videoly.Repo,
-      # Start the Telemetry supervisor
       VideolyWeb.Telemetry,
-      # Start the PubSub system
       {Phoenix.PubSub, name: Videoly.PubSub},
-      # Start the Endpoint (http/https)
-      VideolyWeb.Endpoint
-      # Start a worker by calling: Videoly.Worker.start_link(arg)
-      # {Videoly.Worker, arg}
+      VideolyWeb.Endpoint,
+      {Videoly.RoomServer, []}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

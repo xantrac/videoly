@@ -11,10 +11,6 @@ defmodule VideolyWeb.Router do
 
   pipeline :api do
     plug :accepts, ["json"]
-
-    scope "/rooms", VideolyWeb do
-      post "/create", RoomController, :create
-    end
   end
 
   scope "/", VideolyWeb do
@@ -26,9 +22,17 @@ defmodule VideolyWeb.Router do
   end
 
   # Other scopes may use custom stacks.
-  # scope "/api", VideolyWeb do
-  #   pipe_through :api
-  # end
+  scope "/api", VideolyWeb do
+    pipe_through :api
+
+    resources "/rooms", RoomController, only: [:create]
+  end
+
+  scope "/webhooks", VideolyWeb do
+    pipe_through :api
+
+    post "/twilio", WebHooksController, :twilio
+  end
 
   # Enables LiveDashboard only for development
   #

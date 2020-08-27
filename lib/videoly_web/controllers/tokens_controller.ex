@@ -3,7 +3,7 @@ defmodule VideolyWeb.TokensController do
 
   def generate(conn, %{"username" => username, "roomname" => room}) do
     token = tokenize(username, room)
-    text conn, token
+    text(conn, token)
   end
 
   def tokenize(username, room) do

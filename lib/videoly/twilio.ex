@@ -6,7 +6,15 @@ defmodule Videoly.Twilio do
   end
 
   def create_room(name) do
-    body = {:form, [UniqueName: name, Type: "peer-to-peer"]}
+    body =
+      {:form,
+       [
+         UniqueName: name,
+         Type: "peer-to-peer",
+         statusCallbackMethod: "POST",
+         StatusCallback: Application.get_env(:videoly, :TWILIO_WEBHOOK_URL)
+       ]}
+
     post!("Rooms", body, headers())
   end
 

@@ -11,7 +11,6 @@ defmodule VideolyWeb.Endpoint do
   ]
 
   plug CORSPlug, origin: "*"
-  plug VideolyWeb.Plugs.XFramePlug
 
   socket "/socket", VideolyWeb.UserSocket,
     websocket: true,

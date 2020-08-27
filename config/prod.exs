@@ -31,9 +31,9 @@ config :videoly, VideolyWeb.Repo,
   # Free tier db only allows 4 connections. Rolling deploys need pool_size*(n+1) connections where n is the number of app replicas.
   pool_size: 2
 
-  config :videoly,
+config :videoly,
   TWILIO_ACCOUNT_SID: Map.fetch!(System.get_env(), "TWILIO_ACCOUNT_SID"),
   TWILIO_API_KEY: Map.fetch!(System.get_env(), "TWILIO_API_KEY"),
-  TWILIO_API_SECRET:  Map.fetch!(System.get_env(), "TWILIO_API_SECRET")
+  TWILIO_API_SECRET: Map.fetch!(System.get_env(), "TWILIO_API_SECRET")
 
 import_config "prod.secret.exs"

@@ -47,7 +47,7 @@ defmodule Videoly.MixProject do
       {:plug_cowboy, "~> 2.0"},
       {:cors_plug, "~> 2.0"},
       {:httpoison, "~> 1.6"},
-      {:joken, "~> 2.0"},
+      {:joken, "~> 2.0"}
     ]
   end
 
