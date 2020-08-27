@@ -19,6 +19,7 @@ config :logger, level: :info
 config :videoly, VideolyWeb.Endpoint,
   http: [port: {:system, "PORT"}], # Possibly not needed, but doesn't hurt
   url: [host: "${APP_NAME}.gigalixirapp.com", port: 443],
+  check_origin: false,
   secret_key_base: Map.fetch!(System.get_env(), "SECRET_KEY_BASE"),
   server: true
 
