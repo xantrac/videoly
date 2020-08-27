@@ -1,152 +1,157 @@
-import css from '../css/app.scss';
-import 'phoenix_html';
-import channel from './socket';
+'use strict';
+import css from '../css/app.css';
 
 
-function pushPeerMessage(type, content) {
-    channel.push('peer-message', {
-        body: JSON.stringify({
-            type,
-            content,
-        }),
-    });
-}
+const { isSupported } = require('twilio-video');
 
-const mediaConstraints = {
-    audio: true,
-    video: true,
+const { isMobile } = require('./browser');
+const { joinRoom } = require('./joinroom');
+const { micLevel } = require('./miclevel');
+const { selectMedia } = require('./selectmedia');
+const { selectRoom } = require('./selectroom');
+const { showError } = require('./showerror');
+
+const $modals = $('#modals');
+const $selectMicModal = $('#select-mic', $modals);
+const $selectCameraModal = $('#select-camera', $modals);
+const $showErrorModal = $('#show-error', $modals);
+const $joinRoomModal = $('#join-room', $modals);
+
+// ConnectOptions settings for a video web application.
+const connectOptions = {
+  // Available only in Small Group or Group Rooms only. Please set "Room Type"
+  // to "Group" or "Small Group" in your Twilio Console:
+  // https://www.twilio.com/console/video/configure
+  bandwidthProfile: {
+    video: {
+      dominantSpeakerPriority: 'high',
+      mode: 'collaboration',
+      renderDimensions: {
+        high: { height: 720, width: 1280 },
+        standard: { height: 90, width: 160 }
+      }
+    }
+  },
+
+  // Available only in Small Group or Group Rooms only. Please set "Room Type"
+  // to "Group" or "Small Group" in your Twilio Console:
+  // https://www.twilio.com/console/video/configure
+  dominantSpeaker: true,
+
+  // Comment this line to disable verbose logging.
+  logLevel: 'debug',
+
+  // Comment this line if you are playing music.
+  maxAudioBitrate: 16000,
+
+  // VP8 simulcast enables the media server in a Small Group or Group Room
+  // to adapt your encoded video quality for each RemoteParticipant based on
+  // their individual bandwidth constraints. This has no utility if you are
+  // using Peer-to-Peer Rooms, so you can comment this line.
+  preferredVideoCodecs: [{ codec: 'VP8', simulcast: true }],
+
+  // Capture 720p video @ 24 fps.
+  video: { height: 720, frameRate: 24, width: 1280 }
 };
 
-const devices = navigator.mediaDevices;
-
-const connectButton = document.getElementById('connect');
-const callButton = document.getElementById('call');
-const disconnectButton = document.getElementById('disconnect');
-
-const remoteVideo = document.getElementById('remote-stream');
-const localVideo = document.getElementById('local-stream');
-
-let peerConnection;
-let remoteStream = new MediaStream();
-
-setVideoStream(remoteVideo, remoteStream);
-
-disconnectButton.disabled = true;
-callButton.disabled = true;
-connectButton.onclick = connect;
-callButton.onclick = call;
-disconnectButton.onclick = disconnect;
-
-async function connect() {
-    connectButton.disabled = true;
-    disconnectButton.disabled = false;
-    callButton.disabled = false;
-    const localStream = await devices.getUserMedia(mediaConstraints);
-    setVideoStream(localVideo, localStream);
-    peerConnection = createPeerConnection(localStream);
+// For mobile browsers, limit the maximum incoming video bitrate to 2.5 Mbps.
+if (isMobile) {
+  connectOptions
+    .bandwidthProfile
+    .video
+    .maxSubscriptionBitrate = 2500000;
 }
 
-async function call() {
-    let offer = await peerConnection.createOffer();
-    peerConnection.setLocalDescription(offer);
-    pushPeerMessage('video-offer', offer);
+// On mobile browsers, there is the possibility of not getting any media even
+// after the user has given permission, most likely due to some other app reserving
+// the media device. So, we make sure users always test their media devices before
+// joining the Room. For more best practices, please refer to the following guide:
+// https://www.twilio.com/docs/video/build-js-video-application-recommendations-and-best-practices
+const deviceIds = {
+  audio: isMobile ? null : localStorage.getItem('audioDeviceId'),
+  video: isMobile ? null : localStorage.getItem('videoDeviceId')
+};
+
+/**
+ * Select your Room name, your screen name and join.
+ * @param [error=null] - Error from the previous Room session, if any
+ */
+async function selectAndJoinRoom(error = null) {
+  const formData = await selectRoom($joinRoomModal, error);
+  if (!formData) {
+    // User wants to change the camera and microphone.
+    // So, show them the microphone selection modal.
+    deviceIds.audio = null;
+    deviceIds.video = null;
+    return selectMicrophone();
+  }
+  const { identity, roomName } = formData;
+
+  try {
+    // Fetch an AccessToken to join the Room.
+    const response = await fetch(`/token?username=${identity}&roomname=${roomName}`);
+
+    // Extract the AccessToken from the Response.
+    const token = await response.text();
+
+    // Add the specified audio device ID to ConnectOptions.
+    connectOptions.audio = { deviceId: { exact: deviceIds.audio } };
+
+    // Add the specified Room name to ConnectOptions.
+    connectOptions.name = roomName;
+
+    // Add the specified video device ID to ConnectOptions.
+    connectOptions.video.deviceId = { exact: deviceIds.video };
+
+    // Join the Room.
+    await joinRoom(token, connectOptions);
+
+    // After the video session, display the room selection modal.
+    return selectAndJoinRoom();
+  } catch (error) {
+    return selectAndJoinRoom(error);
+  }
 }
 
-function createPeerConnection(stream) {
-    let connection = new RTCPeerConnection({
-        iceServers: [
-            {
-                urls: 'stun:stun.stunprotocol.org',
-            },
-        ],
-    });
-    connection.ontrack = handleOnTrack;
-    connection.onicecandidate = handleIceCandidate;
-    stream.getTracks().forEach(track => connection.addTrack(track));
-    return connection;
-}
-
-function handleOnTrack(event) {
-    console.log(event);
-    remoteStream.addTrack(event.track);
-}
-
-function handleIceCandidate(event) {
-    if (!!event.candidate) {
-        pushPeerMessage('ice-candidate', event.candidate);
+/**
+ * Select your camera.
+ */
+async function selectCamera() {
+  if (deviceIds.video === null) {
+    try {
+      deviceIds.video = await selectMedia('video', $selectCameraModal, stream => {
+        const $video = $('video', $selectCameraModal);
+        $video.get(0).srcObject = stream;
+      });
+    } catch (error) {
+      showError($showErrorModal, error);
+      return;
     }
+  }
+  return selectAndJoinRoom();
 }
 
-function disconnect() {
-    connectButton.disabled = false;
-    disconnectButton.disabled = true;
-    callButton.disabled = true;
-    unsetVideoStream(localVideo);
-    unsetVideoStream(remoteVideo);
-    peerConnection.close();
-    peerConnection = null;
-    remoteStream = new MediaStream();
-    setVideoStream(remoteVideo, remoteStream);
-    pushPeerMessage('disconnect', {});
-}
-
-function receiveRemote(offer) {
-    let remoteDescription = new RTCSessionDescription(offer);
-    peerConnection.setRemoteDescription(remoteDescription);
-}
-
-async function answerCall(offer) {
-    receiveRemote(offer);
-    let answer = await peerConnection.createAnswer();
-    peerConnection
-        .setLocalDescription(answer)
-        .then(() =>
-            pushPeerMessage('video-answer', peerConnection.localDescription)
-        );
-}
-
-channel.on('peer-message', payload => {
-    const message = JSON.parse(payload.body);
-    switch (message.type) {
-        case 'video-offer':
-            log('offered: ', message.content);
-            answerCall(message.content);
-            break;
-        case 'video-answer':
-            log('answered: ', message.content);
-            receiveRemote(message.content);
-            break;
-        case 'ice-candidate':
-            log('candidate: ', message.content);
-            let candidate = new RTCIceCandidate(message.content);
-            peerConnection
-                .addIceCandidate(candidate)
-                .catch(reportError('adding and ice candidate'));
-            break;
-        case 'disconnect':
-            disconnect();
-            break;
-        default:
-            reportError('unhandled message type')(message.type);
+/**
+ * Select your microphone.
+ */
+async function selectMicrophone() {
+  if (deviceIds.audio === null) {
+    try {
+      deviceIds.audio = await selectMedia('audio', $selectMicModal, stream => {
+        const $levelIndicator = $('svg rect', $selectMicModal);
+        const maxLevel = Number($levelIndicator.attr('height'));
+        micLevel(stream, maxLevel, level => $levelIndicator.attr('y', maxLevel - level));
+      });
+    } catch (error) {
+      showError($showErrorModal, error);
+      return;
     }
+  }
+  return selectCamera();
+}
+
+// If the current browser is not supported by twilio-video.js, show an error
+// message. Otherwise, start the application.
+window.addEventListener('load', isSupported ? selectMicrophone : () => {
+  showError($showErrorModal, new Error('This browser is not supported.'));
 });
-
-function setVideoStream(videoElement, stream) {
-    videoElement.srcObject = stream;
-}
-
-function unsetVideoStream(videoElement) {
-    if (videoElement.srcObject) {
-        videoElement.srcObject.getTracks().forEach(track => track.stop());
-    }
-    videoElement.removeAttribute('src');
-    videoElement.removeAttribute('srcObject');
-}
-
-const reportError = where => error => {
-    console.error(where, error);
-};
-
-function log() {
-    console.log(...arguments);
-}

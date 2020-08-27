@@ -10,6 +10,9 @@ defmodule VideolyWeb.Endpoint do
     signing_salt: "iVQYfEV6"
   ]
 
+  plug CORSPlug, origin: "*"
+  plug VideolyWeb.Plugs.XFramePlug
+
   socket "/socket", VideolyWeb.UserSocket,
     websocket: true,
     longpoll: false

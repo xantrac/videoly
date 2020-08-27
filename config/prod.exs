@@ -17,7 +17,8 @@ config :videoly, VideolyWeb.Endpoint,
 config :logger, level: :info
 
 config :videoly, VideolyWeb.Endpoint,
-  http: [port: {:system, "PORT"}], # Possibly not needed, but doesn't hurt
+  # Possibly not needed, but doesn't hurt
+  http: [port: {:system, "PORT"}],
   url: [host: "${APP_NAME}.gigalixirapp.com", port: 443],
   check_origin: false,
   secret_key_base: Map.fetch!(System.get_env(), "SECRET_KEY_BASE"),
@@ -27,6 +28,12 @@ config :videoly, VideolyWeb.Repo,
   adapter: Ecto.Adapters.Postgres,
   url: System.get_env("DATABASE_URL"),
   ssl: true,
-  pool_size: 2 # Free tier db only allows 4 connections. Rolling deploys need pool_size*(n+1) connections where n is the number of app replicas.
+  # Free tier db only allows 4 connections. Rolling deploys need pool_size*(n+1) connections where n is the number of app replicas.
+  pool_size: 2
+
+  config :videoly,
+  TWILIO_ACCOUNT_SID: Map.fetch!(System.get_env(), "TWILIO_ACCOUNT_SID"),
+  TWILIO_API_KEY: Map.fetch!(System.get_env(), "TWILIO_API_KEY"),
+  TWILIO_API_SECRET:  Map.fetch!(System.get_env(), "TWILIO_API_SECRET")
 
 import_config "prod.secret.exs"

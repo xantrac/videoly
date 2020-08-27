@@ -11,13 +11,18 @@ defmodule VideolyWeb.Router do
 
   pipeline :api do
     plug :accepts, ["json"]
+
+    scope "/rooms", VideolyWeb do
+      post "/create", RoomController, :create
+    end
   end
 
   scope "/", VideolyWeb do
     pipe_through :browser
 
-    get "/", PageController, :index
+    get "/token", TokensController, :generate
     get "/meet/:meeting_uuid", PageController, :meet
+    get "/", PageController, :index
   end
 
   # Other scopes may use custom stacks.
