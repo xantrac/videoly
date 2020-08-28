@@ -5,7 +5,7 @@ defmodule VideolyWeb.PageController do
     render(conn, "index.html")
   end
 
-  def meet(conn, %{"meeting_uuid" => meeting_uuid}) do
-    render(conn, "video_chat.html", %{meeting_uuid: meeting_uuid})
+  def meet(conn, %{"room_uuid" => room_uuid}) do
+    render(conn, "video_chat.html", %{room_uuid: room_uuid})
   end
 end

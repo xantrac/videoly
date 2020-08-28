@@ -17,7 +17,7 @@ defmodule VideolyWeb.Router do
     pipe_through :browser
 
     get "/token", TokensController, :generate
-    get "/meet/:meeting_uuid", PageController, :meet
+    get "/meet/:room_uuid", PageController, :meet
     get "/", PageController, :index
   end
 

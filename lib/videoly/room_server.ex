@@ -30,7 +30,6 @@ defmodule Videoly.RoomServer do
   def handle_call({:create_room, meeting_uuid}, _, rooms) do
     uuid = Ecto.UUID.generate()
     response = Videoly.Twilio.create_room(uuid)
-    IO.inspect(response)
     {:reply, :ok, Map.put(rooms, uuid, meeting_uuid)}
   end
 end
