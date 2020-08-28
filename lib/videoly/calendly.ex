@@ -1,12 +1,10 @@
 defmodule Videoly.Calendly do
   use HTTPoison.Base
 
-  # def process_request_url(url) do
-  #   base_url = Application.get_env(:videoly, :CALENDLY_BASE_URL)
-  #   IO.inspect(base_url)
-  #   IO.inspect(url)
-  #   base_url <> url
-  # end
+  def process_request_url(url) do
+    base_url = Application.get_env(:videoly, :CALENDLY_BASE_URL)
+    base_url <> url
+  end
 
   def request(method, url, headers, body, opts) do
     IO.inspect(url)
@@ -21,7 +19,7 @@ defmodule Videoly.Calendly do
 
     try do
       post!(
-        "http://localhost:3000/webhooks/videoly/events",
+        "/webhooks/videoly/events",
         body,
         [{"Content-type", "application/json"}],
         timeout: 5_000,
